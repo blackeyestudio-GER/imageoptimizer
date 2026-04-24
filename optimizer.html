@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Optimizer</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #18181b;
+        --bg-soft: #09090b;
+        --panel: rgba(24, 24, 27, 0.72);
+        --panel-strong: #09090b;
+        --panel-soft: rgba(39, 39, 42, 0.45);
+        --border: rgba(63, 63, 70, 0.95);
+        --border-soft: rgba(63, 63, 70, 0.5);
+        --text: #f4f4f5;
+        --muted: #a1a1aa;
+        --accent: #0ea5e9;
+        --accent-2: #38bdf8;
+        --danger: #ef4444;
+        --shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: var(--text);
+        background: linear-gradient(180deg, var(--bg-soft), var(--bg));
+      }
+
+      .shell {
+        width: min(1600px, calc(100% - 2rem));
+        margin: 0 auto;
+        padding: 1.5rem 0 2rem;
+      }
+
+      .hero {
+        margin-bottom: 1.25rem;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+      }
+
+      .sub {
+        max-width: 52rem;
+        margin-top: 0.45rem;
+        color: var(--muted);
+        line-height: 1.5;
+        font-size: 0.92rem;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(19rem, 24rem) minmax(0, 1fr);
+        gap: 1.5rem;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        box-shadow: var(--shadow);
+      }
+
+      .controls {
+        padding: 1rem;
+      }
+
+      .section + .section {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-soft);
+      }
+
+      .label-row,
+      .stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .label-row {
+        margin-bottom: 0.5rem;
+      }
+
+      .section-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .value {
+        font-variant-numeric: tabular-nums;
+        color: var(--text);
+        font-size: 0.95rem;
+      }
+
+      input[type="file"],
+      input[type="range"],
+      select,
+      button {
+        width: 100%;
+      }
+
+      input[type="file"] {
+        color: var(--muted);
+      }
+
+      input[type="file"]::file-selector-button {
+        margin-right: 0.9rem;
+        border: 1px solid var(--border);
+        border-radius: 0.8rem;
+        padding: 0.65rem 0.9rem;
+        background: #3f3f46;
+        color: var(--text);
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      select,
+      button {
+        border: 1px solid var(--border);
+        border-radius: 0.9rem;
+        padding: 0.85rem 1rem;
+        background: var(--panel-strong);
+        color: var(--text);
+        font: inherit;
+      }
+
+      input[type="range"] {
+        accent-color: var(--accent);
+      }
+
+      button {
+        cursor: pointer;
+        transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+      }
+
+      button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        border-color: rgba(255, 255, 255, 0.18);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+
+      .btn-primary {
+        background: rgba(14, 165, 233, 0.16);
+        border-color: rgba(14, 165, 233, 0.45);
+      }
+
+      .btn-secondary {
+        background: rgba(39, 39, 42, 0.85);
+        border-color: var(--border);
+      }
+
+      .preview {
+        padding: 1rem;
+      }
+
+      .preview-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+      }
+
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        overflow: hidden;
+        background: var(--panel-soft);
+      }
+
+      .card-head {
+        padding: 0.9rem 1rem;
+        border-bottom: 1px solid var(--border-soft);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .card-title {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 650;
+      }
+
+      .meta {
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .stage {
+        aspect-ratio: 1 / 1;
+        display: grid;
+        place-items: center;
+        padding: 1rem;
+        background:
+          linear-gradient(45deg, rgba(255, 255, 255, 0.035) 25%, transparent 25% 75%, rgba(255, 255, 255, 0.035) 75%),
+          linear-gradient(45deg, rgba(255, 255, 255, 0.035) 25%, transparent 25% 75%, rgba(255, 255, 255, 0.035) 75%);
+        background-size: 1.25rem 1.25rem;
+        background-position: 0 0, 0.625rem 0.625rem;
+      }
+
+      .stage img,
+      .stage canvas {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        border-radius: 0.8rem;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+      }
+
+      .placeholder {
+        text-align: center;
+        color: var(--muted);
+        padding: 1rem;
+        line-height: 1.5;
+      }
+
+      .stats {
+        display: grid;
+        gap: 0.55rem;
+      }
+
+      .status {
+        margin-top: 1rem;
+        min-height: 1.3rem;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .status.error {
+        color: var(--danger);
+      }
+
+      .status.good {
+        color: var(--accent);
+      }
+
+      .hint {
+        margin-top: 0.65rem;
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.45;
+      }
+
+      @media (max-width: 900px) {
+        .grid,
+        .preview-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="hero">
+        <h1>Image Optimizer</h1>
+        <div class="sub">
+          Resize and recompress images locally in your browser. Upload a file, tune the sliders, preview the result, then download it as <code>webp</code> or <code>png</code>.
+        </div>
+      </div>
+
+      <div class="grid">
+        <aside class="panel controls">
+          <div class="section">
+            <div class="label-row">
+              <div class="section-title">Source</div>
+            </div>
+            <input id="file-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" />
+            <div class="hint">Animated GIFs and SVGs will be exported as a static bitmap.</div>
+          </div>
+
+          <div class="section">
+            <div class="label-row">
+              <label class="section-title" for="max-size">Output Size</label>
+              <div class="value"><span id="max-size-value">512</span> px</div>
+            </div>
+            <input id="max-size" type="range" min="64" max="2048" step="32" value="512" list="max-size-marks" />
+            <datalist id="max-size-marks">
+              <option value="128"></option>
+              <option value="256"></option>
+              <option value="512"></option>
+              <option value="1024"></option>
+              <option value="1536"></option>
+              <option value="2048"></option>
+            </datalist>
+            <div class="hint">Controls the longest edge. Smaller images can be upscaled too, but that increases size more than real detail.</div>
+          </div>
+
+          <div class="section">
+            <div class="label-row">
+              <label class="section-title" for="webp-quality">WebP Quality</label>
+              <div class="value"><span id="webp-quality-value">80</span>%</div>
+            </div>
+            <input id="webp-quality" type="range" min="10" max="100" step="1" value="80" />
+          </div>
+
+          <div class="section">
+            <div class="label-row">
+              <label class="section-title" for="background-mode">PNG Background</label>
+            </div>
+            <select id="background-mode">
+              <option value="transparent">Keep transparency</option>
+              <option value="white">Flatten on white</option>
+              <option value="black">Flatten on black</option>
+            </select>
+            <div class="hint">Useful when the source has transparency and you want a flattened export.</div>
+          </div>
+
+          <div class="section">
+            <div class="label-row">
+              <div class="section-title">Export</div>
+            </div>
+            <button id="download-webp" class="btn-primary" disabled>Download WebP</button>
+            <div style="height: 0.75rem"></div>
+            <button id="download-png" class="btn-secondary" disabled>Download PNG</button>
+          </div>
+
+          <div class="section">
+            <div class="section-title" style="margin-bottom: 0.75rem">Stats</div>
+            <div class="stats">
+              <div class="stat-row"><span class="meta">Original size</span><span id="original-size" class="value">-</span></div>
+              <div class="stat-row"><span class="meta">Original dimensions</span><span id="original-dimensions" class="value">-</span></div>
+              <div class="stat-row"><span class="meta">Output dimensions</span><span id="output-dimensions" class="value">-</span></div>
+              <div class="stat-row"><span class="meta">Estimated WebP</span><span id="webp-size" class="value">-</span></div>
+              <div class="stat-row"><span class="meta">Estimated PNG</span><span id="png-size" class="value">-</span></div>
+            </div>
+            <div id="status" class="status">Choose an image to begin.</div>
+          </div>
+        </aside>
+
+        <main class="panel preview">
+          <div class="preview-grid">
+            <section class="card">
+              <div class="card-head">
+                <h2 class="card-title">Original</h2>
+                <div id="original-meta" class="meta">No image loaded</div>
+              </div>
+              <div class="stage">
+                <img id="original-preview" alt="Original preview" hidden />
+                <div id="original-placeholder" class="placeholder">Upload an image to preview the original.</div>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="card-head">
+                <h2 class="card-title">Optimized Preview</h2>
+                <div id="optimized-meta" class="meta">Waiting for image</div>
+              </div>
+              <div class="stage">
+                <canvas id="optimized-canvas" width="512" height="512" hidden></canvas>
+                <img id="optimized-preview" alt="Optimized preview" hidden />
+                <div id="optimized-placeholder" class="placeholder">The optimized result will appear here.</div>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        'use strict';
+
+        var state = {
+          file: null,
+          bitmap: null,
+          objectUrl: '',
+          previewWebpUrl: '',
+          lastWebpBlob: null,
+          lastPngBlob: null,
+          outputWidth: 0,
+          outputHeight: 0,
+        };
+
+        function $(id) {
+          return document.getElementById(id);
+        }
+
+        function setStatus(message, tone) {
+          var el = $('status');
+          el.textContent = message || '';
+          el.className = 'status' + (tone ? ' ' + tone : '');
+        }
+
+        function formatBytes(bytes) {
+          if (!Number.isFinite(bytes)) return '-';
+          if (bytes < 1024) return bytes + ' B';
+          if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1).replace(/\.0$/, '') + ' KB';
+          return (bytes / (1024 * 1024)).toFixed(2).replace(/\.00$/, '') + ' MB';
+        }
+
+        function resetUi() {
+          $('original-preview').src = '';
+          $('original-preview').hidden = true;
+          $('original-placeholder').hidden = false;
+          $('optimized-canvas').hidden = true;
+          $('optimized-preview').src = '';
+          $('optimized-preview').hidden = true;
+          $('optimized-placeholder').hidden = false;
+          $('original-size').textContent = '-';
+          $('original-dimensions').textContent = '-';
+          $('output-dimensions').textContent = '-';
+          $('webp-size').textContent = '-';
+          $('png-size').textContent = '-';
+          $('original-meta').textContent = 'No image loaded';
+          $('optimized-meta').textContent = 'Waiting for image';
+          $('download-webp').disabled = true;
+          $('download-png').disabled = true;
+        }
+
+        function cleanupState() {
+          if (state.bitmap && typeof state.bitmap.close === 'function') state.bitmap.close();
+          if (state.objectUrl) URL.revokeObjectURL(state.objectUrl);
+          if (state.previewWebpUrl) URL.revokeObjectURL(state.previewWebpUrl);
+          state.bitmap = null;
+          state.objectUrl = '';
+          state.previewWebpUrl = '';
+          state.lastWebpBlob = null;
+          state.lastPngBlob = null;
+          state.file = null;
+          state.outputWidth = 0;
+          state.outputHeight = 0;
+          resetUi();
+        }
+
+        function getCanvas() {
+          return $('optimized-canvas');
+        }
+
+        function updateSliderLabels() {
+          $('max-size-value').textContent = $('max-size').value;
+          $('webp-quality-value').textContent = $('webp-quality').value;
+        }
+
+        function drawCheckerboardAware(canvas, width, height) {
+          canvas.width = width;
+          canvas.height = height;
+          var ctx = canvas.getContext('2d', { alpha: true });
+          ctx.clearRect(0, 0, width, height);
+          return ctx;
+        }
+
+        function computeOutputSize(sourceWidth, sourceHeight) {
+          var maxSize = Number($('max-size').value);
+          var finalScale = Math.max(1 / Math.max(sourceWidth, sourceHeight), maxSize / Math.max(sourceWidth, sourceHeight));
+          var width = Math.max(1, Math.round(sourceWidth * finalScale));
+          var height = Math.max(1, Math.round(sourceHeight * finalScale));
+          return { width: width, height: height };
+        }
+
+        function clampSliderSize(size) {
+          if (!Number.isFinite(size)) return 512;
+          return Math.max(64, Math.min(2048, Math.round(size / 32) * 32));
+        }
+
+        function canvasToBlob(canvas, type, quality) {
+          return new Promise(function (resolve, reject) {
+            canvas.toBlob(function (blob) {
+              if (!blob) {
+                reject(new Error('Export failed.'));
+                return;
+              }
+              resolve(blob);
+            }, type, quality);
+          });
+        }
+
+        async function render() {
+          updateSliderLabels();
+          if (!state.bitmap) {
+            $('download-webp').disabled = true;
+            $('download-png').disabled = true;
+            $('output-dimensions').textContent = '-';
+            $('webp-size').textContent = '-';
+            $('png-size').textContent = '-';
+            return;
+          }
+
+          var output = computeOutputSize(state.bitmap.width, state.bitmap.height);
+          state.outputWidth = output.width;
+          state.outputHeight = output.height;
+
+          var canvas = getCanvas();
+          var ctx = drawCheckerboardAware(canvas, output.width, output.height);
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+
+          var backgroundMode = $('background-mode').value;
+          if (backgroundMode === 'white') {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, output.width, output.height);
+          } else if (backgroundMode === 'black') {
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, output.width, output.height);
+          }
+
+          ctx.drawImage(state.bitmap, 0, 0, output.width, output.height);
+
+          $('output-dimensions').textContent = output.width + ' × ' + output.height;
+          $('optimized-meta').textContent = output.width + ' × ' + output.height;
+
+          try {
+            var webpBlob = await canvasToBlob(canvas, 'image/webp', Number($('webp-quality').value) / 100);
+            var pngBlob = await canvasToBlob(canvas, 'image/png');
+            if (state.previewWebpUrl) URL.revokeObjectURL(state.previewWebpUrl);
+            state.previewWebpUrl = URL.createObjectURL(webpBlob);
+            state.lastWebpBlob = webpBlob;
+            state.lastPngBlob = pngBlob;
+            $('optimized-preview').src = state.previewWebpUrl;
+            $('optimized-preview').hidden = false;
+            $('optimized-canvas').hidden = true;
+            $('optimized-placeholder').hidden = true;
+            $('webp-size').textContent = formatBytes(webpBlob.size);
+            $('png-size').textContent = formatBytes(pngBlob.size);
+            $('download-webp').disabled = false;
+            $('download-png').disabled = false;
+
+            if (webpBlob.size < state.file.size) {
+              var saved = state.file.size - webpBlob.size;
+              setStatus('Ready. WebP saves about ' + formatBytes(saved) + '.', 'good');
+            } else {
+              setStatus('Ready. Compare WebP and PNG before downloading.', '');
+            }
+          } catch (err) {
+            $('download-webp').disabled = true;
+            $('download-png').disabled = true;
+            setStatus(err.message || 'Optimization failed.', 'error');
+          }
+        }
+
+        async function loadFile(file) {
+          cleanupState();
+          updateSliderLabels();
+
+          if (!file) {
+            setStatus('Choose an image to begin.', '');
+            return;
+          }
+
+          state.file = file;
+          state.objectUrl = URL.createObjectURL(file);
+
+          $('original-preview').src = state.objectUrl;
+          $('original-preview').hidden = false;
+          $('original-placeholder').hidden = true;
+          $('original-size').textContent = formatBytes(file.size);
+          $('original-meta').textContent = file.type || 'image';
+
+          try {
+            state.bitmap = await createImageBitmap(file);
+            $('max-size').value = String(clampSliderSize(Math.max(state.bitmap.width, state.bitmap.height)));
+            updateSliderLabels();
+            $('original-dimensions').textContent = state.bitmap.width + ' × ' + state.bitmap.height;
+            $('original-meta').textContent = state.bitmap.width + ' × ' + state.bitmap.height;
+            await render();
+          } catch (err) {
+            cleanupState();
+            setStatus('Could not decode this image.', 'error');
+          }
+        }
+
+        function downloadBlob(blob, extension) {
+          if (!blob || !state.file) return;
+          var baseName = state.file.name.replace(/\.[^.]+$/, '') || 'optimized-image';
+          var url = URL.createObjectURL(blob);
+          var link = document.createElement('a');
+          link.href = url;
+          link.download = baseName + '.' + extension;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(function () {
+            URL.revokeObjectURL(url);
+          }, 1000);
+        }
+
+        $('file-input').addEventListener('change', function (event) {
+          loadFile(event.target.files && event.target.files[0]);
+        });
+
+        ['max-size', 'webp-quality', 'background-mode'].forEach(function (id) {
+          $(id).addEventListener('input', function () {
+            render();
+          });
+          $(id).addEventListener('change', function () {
+            render();
+          });
+        });
+
+        $('download-webp').addEventListener('click', function () {
+          downloadBlob(state.lastWebpBlob, 'webp');
+        });
+
+        $('download-png').addEventListener('click', function () {
+          downloadBlob(state.lastPngBlob, 'png');
+        });
+
+        updateSliderLabels();
+        resetUi();
+      })();
+    </script>
+  </body>
+</html>
